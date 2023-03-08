@@ -3,7 +3,7 @@ const BookSchema = new mongoose.Schema({
     id: {
         type: Number,
         required: true,
-        unique: true,
+        unique: true
     },
     name: {
         type: String,
@@ -15,11 +15,11 @@ const BookSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        default: "Miscellaneous",
+        default: "Miscellaneous"
     },
     count: {
         type: Number,
-        required: true,
+        required: true
     }
 })
 

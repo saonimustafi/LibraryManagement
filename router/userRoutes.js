@@ -16,7 +16,7 @@ userRouter.get('/users', async (request, response) => {
 })
 
 // POST Operator
-userRouter.post('/users/newUser', async (request, response) => {
+userRouter.post('/users/newuser', async (request, response) => {
     try{
         const newUser = new userModel(request.body)
         const user = await userModel.create(newUser)
@@ -29,9 +29,9 @@ userRouter.post('/users/newUser', async (request, response) => {
 })
 
 // PUT Operator
-userRouter.put('/users/updateUser/:id', async (request, response) => {
+userRouter.put('/users/updateuser/:id', async (request, response) => {
     try{
-        const updateUser = await userModel.findOneAndUpdate({id: request.params._id}, request.body, {new: true})
+        const updateUser = await userModel.findOneAndUpdate({id: request.params.id}, request.body, {new: true})
         response.status(200).send(updateUser)
     }
     catch(error) {
@@ -41,9 +41,9 @@ userRouter.put('/users/updateUser/:id', async (request, response) => {
 })
 
 // DELETE Operator
-userRouter.delete('/users/deleteUsers/:id', async(request, response) => {
+userRouter.delete('/users/deleteusers/:id', async(request, response) => {
     try {
-        const deleteUser = await userModel.findOneAndDelete({id: request.params._id})
+        const deleteUser = await userModel.findOneAndDelete({id: request.params.id})
         response.status(204).send(deleteUser)
     }
     catch(error) {

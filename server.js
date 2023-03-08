@@ -3,6 +3,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const bookRouter = require('./router/bookRoutes')
 const userRouter = require('./router/userRoutes')
+const requestRouter = require('./router/RequestRoutes')
 
 const app = express()
 const port = 3000
@@ -19,8 +20,10 @@ db.once('open', () => {
 })
 
 app.use(express.json())
+
 app.use('/',bookRouter)
 app.use('/',userRouter)
+app.use('/',requestRouter)
 
 // Start server on port
 app.listen(port, () => {

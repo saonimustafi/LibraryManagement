@@ -16,7 +16,7 @@ bookRouter.get('/books', async (request, response) => {
 })
 
 // POST Operator
-bookRouter.post('/books/newBook', async (request, response) => {
+bookRouter.post('/books/newbook', async (request, response) => {
     try {
         const newBook = new bookModel(request.body)
         const book = await bookModel.create(newBook)
@@ -29,7 +29,7 @@ bookRouter.post('/books/newBook', async (request, response) => {
 })
 
 //PUT Operator
-bookRouter.put('/books/updateBook/:id', async (request, response) => {
+bookRouter.put('/books/updatebook/:id', async (request, response) => {
     try {
         console.log('Updating Book...')
         const updateBook = await bookModel.findOneAndUpdate({id: request.params.id}, request.body, {new: true})
@@ -42,7 +42,7 @@ bookRouter.put('/books/updateBook/:id', async (request, response) => {
 })
 
 // DELETE Operator
-bookRouter.delete('/books/deleteBook/:id', async (request, response, next) => {
+bookRouter.delete('/books/deletebook/:id', async (request, response, next) => {
     try {
         const deleteBook = await bookModel.findOneAndDelete({id: request.params.id})
         response.status(204).send(deleteBook)
