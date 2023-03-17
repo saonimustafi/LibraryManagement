@@ -2,12 +2,29 @@ const express = require('express')
 const userRouter = new express.Router()
 const userModel = require('../models/users')
 
-// GET Operator
+// GET Operator - GET all users
 userRouter.get('/users', async (request, response) => {
     try {
         console.log('Fetching users...')
         const users = await userModel.find({})
         response.status(200).send(users)
+    }
+    catch(error) {
+        console.error(error)
+        response.status(500).send('GET operation failed while fetching user')
+    }
+})
+
+// GET Operator - GET user by user id
+userRouter.get('/users/:id', async (request, response) => {
+    const user_id = request.params.id
+    try {
+        const user = await userModel.findOne({id: user_id})
+        if(!user) {
+            response.status(404).send("User does not exist")
+            return
+        }
+        response.status(200).send(user)
     }
     catch(error) {
         console.error(error)

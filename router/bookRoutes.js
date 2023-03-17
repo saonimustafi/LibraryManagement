@@ -2,7 +2,7 @@ const express = require('express')
 const bookRouter = new express.Router()
 const bookModel = require('../models/books')
 
-//GET Operator
+//GET Operator - GET all books
 bookRouter.get('/books', async (request, response) => {
     try {
         console.log('Fetching books...')
@@ -12,6 +12,27 @@ bookRouter.get('/books', async (request, response) => {
     catch(error) {
         console.error(error)
         response.status(500).send('GET operation failed while fetching books')
+    }
+})
+
+// GET Operator - GET book by book id
+bookRouter.get('/books/:id', async(request, response) => {
+    const book_id = request.params.id
+    try {
+        const book = await bookModel.findOne({id : book_id})
+
+        // If book does not exist
+        if(!book) {
+            response.status(404).send("Book does not exist")
+            return
+        }
+        else {
+            response.status(200).send(book)
+        }
+    }
+    catch(error) {
+        console.error(error)
+        response.send(500).status("GET operation failed while fetching book: "+book_id)
     }
 })
 
@@ -37,7 +58,7 @@ bookRouter.put('/books/updatebook/:id', async (request, response) => {
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('POST operation failed while updating book')
+        response.status(500).send('PUT operation failed while updating book')
     }
 })
 

@@ -20,7 +20,7 @@ requestRouter.get('/requests/:user_id', async (request, response) => {
     }
     catch(error) {
         console.error(error)
-        response.status(500).send(error)
+        response.status(500).send("GET request failed to retrieve user requests")
     }
 })
 
@@ -103,7 +103,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
     }
     catch(error) {
         console.error(error)
-        response.status(500).send("Server error occurred")
+        response.status(500).send("POST operation failed to add new requests for user")
     }
 })
 
@@ -152,7 +152,7 @@ requestRouter.delete('/requests/deleterequests/:user_id/:book_id',async(request,
     }
     catch(error) {
         console.error(error)
-        response.status(500).send("Server error occurred")
+        response.status(500).send("DELETE operation failed to delete request for user")
     }
 })
 
@@ -183,7 +183,7 @@ requestRouter.delete('/requests/deleterequests/:user_id', async(request, respons
         }
     }
     catch(error) {
-        response.status(500).send("Server error occurred")
+        response.status(500).send("DELETE operation failed to delete the entire request bucket for the user.")
     }
 })
 
