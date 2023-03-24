@@ -7,7 +7,13 @@ bookRouter.get('/books', async (request, response) => {
     try {
         console.log('Fetching books...')
         const books = await bookModel.find({})
-        response.status(200).send(books)
+        if(books) {
+            response.status(200).send(books)
+            return
+        }
+        if(!books) {
+            response.status(404).send("No books found")
+        }
     }
     catch(error) {
         console.error(error)
@@ -40,8 +46,14 @@ bookRouter.get('/books/:id', async(request, response) => {
 bookRouter.post('/books/newbook', async (request, response) => {
     try {
         const newBook = new bookModel(request.body)
-        const book = await bookModel.create(newBook)
-        response.status(201).send(book)
+        const book = await bookModel.findOne({name : newBook.name})
+        if(!book) {
+            const book = await bookModel.create(newBook)
+            response.status(201).send(book)
+        }
+        else {
+            response.status(400).send("Book already exists, please increase the count")
+        }
     }
     catch(error) {
         console.error(error)
@@ -50,10 +62,19 @@ bookRouter.post('/books/newbook', async (request, response) => {
 })
 
 //PUT Operator
-bookRouter.put('/books/updatebook/:id', async (request, response) => {
+bookRouter.put('/books/updatecount/:id/:count', async (request, response) => {
+    const book_id = request.params.id
+    const count = request.params.count
     try {
         console.log('Updating Book...')
-        const updateBook = await bookModel.findOneAndUpdate({id: request.params.id}, request.body, {new: true})
+        const book = await bookModel.findOne({id: book_id})
+
+        if(!book) {
+            response.status(404).send("Book not found, please add the book first")
+            return
+        }
+
+        const updateBook = await bookModel.updateOne({id: book_id},{$set : {count : count}})
         response.status(200).send(updateBook) 
     }
     catch(error) {

@@ -11,6 +11,7 @@ requestRouter.get('/requests/:user_id', async (request, response) => {
     try {
         const userDetail = await userModel.findOne({id: user_id})
         const requests = await requestModel.findOne({user_id: user_id})
+
         if(requests && requests.books.length != 0) {
             response.status(200).send(requests)
         }
@@ -44,7 +45,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
             const bookIndex = requestBucket.books.findIndex(book => book.book_id == book_id)
 
             // If the book already exists in the request bucket - do not add it again
-            if(bookIndex > -1 && requestBucket.books[bookIndex].book_id == book_id) {
+            if(bookIndex > -1 && (requestBucket.books[bookIndex].book_id == book_id && (requestBucket.books[bookIndex].approvalStatus == "Pending" || requestBucket.books[bookIndex].approvalStatus == "Approved"))) {
                 response.status(200).send(`Cannot add the book "${book.name}" to the request bucket as it already exists for the user: ${userDetail.name}`)
                 return
             }
@@ -61,7 +62,9 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
                     "author": book.author,
                     "requestDate": Date.now(),
                     "approvalStatus": "Pending",
-                    "checkoutDate": null
+                    "approvedOrRejectedDate": null,
+                    "checkoutDate": null,
+                    "comments": null
                 }
 
                 requestBucket.books.push(newBookRequest)
@@ -69,9 +72,10 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
 
                 // Decrease the count of the book in the books DB
                 await bookModel.updateOne({id : book_id}, {$inc : {count : -1}})
+
                 response.status(201).send("Book added to Request Bucket for user: "+userDetail.name)
             }
-            // If the count of book < 0
+            // If the count of book == 0
             else {
                 response.status(200).send("Book not available in the library")
                 return
@@ -93,7 +97,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
 
             const newRequest = {
                 "user_id": user_id,
-                "books": newBookRequest
+                "books": [newBookRequest]
             }
             const newRequestBucket = await requestModel.create(newRequest)
             // Decrease the count of the book
@@ -114,6 +118,7 @@ requestRouter.delete('/requests/deleterequests/:user_id/:book_id',async(request,
     
     try {
         let requestBucket = await requestModel.findOne({user_id: user_id})
+        const userDetail = await userModel.findOne({id: user_id})
 
         // If request bucket for user is not found
         if(!requestBucket) {

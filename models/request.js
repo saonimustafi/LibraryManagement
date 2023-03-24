@@ -27,10 +27,18 @@ const RequestSchema = new mongoose.Schema({ //Also has borrow details
             enum: ['Approved', 'Pending', 'Declined'],
             default: 'Pending'
         },
-        checkoutDate: {
+        approvedOrRejectedDate: {
             type: Date,
             default: null
-        } 
+        },
+        checkOutDate: {
+            type: Date,
+            default: null
+        },
+        comments : {
+            type: String,
+            default: null
+        }
     }]    
 })
 

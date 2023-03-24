@@ -7,6 +7,10 @@ userRouter.get('/users', async (request, response) => {
     try {
         console.log('Fetching users...')
         const users = await userModel.find({})
+        if(!users) {
+            response.status(404).send("No users found")
+            return
+        }
         response.status(200).send(users)
     }
     catch(error) {
