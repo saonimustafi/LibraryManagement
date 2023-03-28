@@ -22,6 +22,7 @@ db.once('open', () => {
     console.log("Connected to DB")
 })
 
+app.use(cors())
 app.use(express.json())
 
 app.use('/', bookRouter)
