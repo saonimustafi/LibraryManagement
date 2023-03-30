@@ -1,32 +1,76 @@
 const express = require('express')
-const checkOutRouter = express.Router()
+const UserActivitiesRouter = express.Router()
 const requestModel = require('../models/request')
 const userActivitiesModel = require('../models/UserActivities')
 const userModel = require('../models/users')
 const bookModel = require("../models/books")
+const jwt = require('jsonwebtoken')
+const User = require('../models/user')
 
 // GET Operator - Get all past and current activities of a user
-checkOutRouter.get('/requests/checkout/:user_id', async(request, response) => {
-    const user_id = request.params.user_id
+UserActivitiesRouter.get('/checkout/:user_id', async(request, response) => {
+    const token = request.headers['x-access-token']	
+    const mockData = {
+        "user_id": 1,
+        "books": [
+          {
+            "bookName": "The Great Gatsby",
+            "dateRequested": "2021-03-09",
+            "approvalDate": "2021-03-10",
+            "approvalStatus": "Approved",
+            "checkoutDate": "03/11/2021",
+            "returnDate": "04/11/2021",
+            "actualReturnDate": "04/11/2021",
+            "fineToPay": 0
+          },
+          {
+            "bookName": "To Kill a Mockingbird",
+            "dateRequested": "03/10/2021",
+            "approvalDate": "03/11/2021",
+            "approvalStatus": "Approved",
+            "checkoutDate": "03/12/2021",
+            "returnDate": "04/12/2021",
+            "actualReturnDate": "04/20/2021",
+            "fineToPay": 16
+          }
+        ]
+      };
+    
     try {
-        const userDetail = await userModel.findOne({id: user_id})
-        const userActivityDetail = await userActivitiesModel.findOne({user_id: user_id})
+		const decoded = jwt.verify(token, 'secret123')
+		const email = decoded.email
+		// const user = await User.findOne({ email: email })
 
-        // If no activity for the user exists
-        if(!userActivityDetail) {
-            response.status(404).send("No activity found for user: "+userDetail.name)
-            return
-        }
-        response.status(200).send(userActivityDetail)
-    }
-    catch(error) {
-        console.error(error)
-        response.status(500).send("GET Operation failed while retrieving activity information for the user")
-    }
+		return response.json({ status: 'ok', userActivities: mockData })
+	} catch (error) {
+		console.log(error)
+		response.json({ status: 'error', error: 'invalid token' })
+	}
+
+    // response.status(200).send(mockData);
+
+
+
+    // const user_id = request.params.user_id
+    // try {
+    //     const userDetail = await userModel.findOne({id: user_id})
+    //     const userActivityDetail = await userActivitiesModel.findOne({user_id: user_id})
+
+    //     // If no activity for the user exists
+    //     if(!userActivityDetail) {
+    //         response.status(404).send("No activity found for user: "+userDetail.name)
+    //         return
+    //     }
+    //     response.status(200).send(userActivityDetail)
+    // }
+    // catch(error) {
+    //     console.error(error)
+    //     response.status(500).send("GET Operation failed while retrieving activity information for the user")
+    // }
 })
 
 // PUT Operator - User tries to check out the approved book requests
-checkOutRouter.put('/checkout/:user_id/:book_id', async(request, response) => {
+UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response) => {
     const user_id = request.params.user_id
     const book_id = request.params.book_id
     try {
@@ -100,3 +144,5 @@ checkOutRouter.put('/checkout/:user_id/:book_id', async(request, response) => {
         response.status(500).send("PUT Operation failed while checking out for the user")
     }
 })
+
+module.exports = UserActivitiesRouter
