@@ -2,6 +2,7 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
+const socketIO = require('./utils/socket');
 
 const bookRouter = require('./router/bookRoutes')
 const userRouter = require('./router/userRoutes')
@@ -10,7 +11,9 @@ const UserActivitiesRouter = require('./router/UserActivitiesRoutes')
 const approveRouter = require('./router/ApprovalStatusRoutes')
 const returnBooksRouter = require('./router/returnBooksRoutes')
 const renewBookRouter = require('./router/renewBookRoutes')
-const UserAuthRouter = require('./router/UserAuthRouter')
+const UserAuthRouter = require('./router/UserAuthRouter');
+const SearchRouter = require('./router/SearchRoutes');
+
 
 const app = express()
 const port = 3000
@@ -31,6 +34,7 @@ db.once('open', () => {
 app.use(cors())
 app.use(express.json())
 
+app.use('/', SearchRouter)
 app.use('/', bookRouter)
 app.use('/', userRouter)
 app.use('/', requestRouter)
@@ -40,7 +44,18 @@ app.use('/', renewBookRouter)
 app.use('/', UserAuthRouter)
 app.use('/', UserActivitiesRouter)
 
+
 // Start server on port
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server running on port: ${port}`)
-})
+});
+
+// Socket.io code
+socketIO.init(server);
+
+// Notification.watch().on('change', (change) => {
+//   if (change.operationType === 'insert') {
+//     const newNotification = change.fullDocument;
+//     io.emit('newNotification', newNotification);
+//   }
+// });

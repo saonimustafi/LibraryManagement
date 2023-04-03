@@ -6,6 +6,9 @@ const userActivitiesModel = require('../models/UserActivities')
 const bookModel = require("../models/books")
 const maxBooks = 6;
 
+const socketIO = require('../utils/socket');
+const Notification = require('../models/Notification');
+
 // GET Operator - Get all the pending requests
 approveRouter.get("/allpendingrequests", async(request, response) => {
     try {
@@ -412,6 +415,74 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
         console.error(error)
         response.status(500).send("PUT operation failed while approving user request for the book")
     }
+})
+
+// PUT Operator - To approve individual request
+approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(request, response) => {
+    const user_id = request.params.user_id
+    const book_id = request.params.book_id
+
+    try {
+        const userDetail = await userModel.findOne({id: user_id})
+        const approvalRequestsForUser = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": "Pending"})
+        const userActivities = await userActivitiesModel.findOne({user_id: user_id, "booksBorrowed.$.returnDate": {$gt: Date.now()} })
+
+        if(!approvalRequestsForUser || approvalRequestsForUser.books.length == 0) {
+            response.status(404).send("Requests don't exist for the user:"+userDetail.name)
+            return
+        }
+
+        const userBooksRequests = approvalRequestsForUser.books
+
+        if(userActivities !== null && userActivities.booksBorrowed.length == maxBooks) {
+            response.status(200).send("Please decline the request as the user has already borrowed maximum books")
+            return
+        }
+        else if (userActivities.booksBorrowed.length < maxBooks && userActivities.booksBorrowed.length + 1 <= maxBooks) {
+            await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
+                {$set:
+                        {"books.$.approvalStatus": 'Approved',
+                            "books.$.approvedOrRejectedDate": Date.now(),
+                            "books.$.comments": "Request approved. Ready for checkout"
+                        }
+                }
+            )
+            response.status(200).send("Request has been approved for book: " + book.name + " user: "+ userDetail.name)
+            return
+        }
+    }
+    catch(error) {
+        console.error(error)
+        response.status(500).send("PUT operation failed while approving user request for the book")
+    }
+})
+
+// Dummy approve route for checking notifications
+approveRouter.post('/requests/aveekapprove/:user_id/:book_id', async(request, response) => {
+    const user_id = request.params.user_id
+    const book_id = request.params.book_id
+    const io = socketIO.getIO();
+    const Notification = require('../models/Notification');
+
+    
+
+    // create a new notification
+    const notification = new Notification({
+        message: 'New book approved',
+        userId: 'userId123',
+        bookId: 1,
+        read: false
+    });
+
+    // save the notification to the database
+    await notification.save()
+    .then(() => {
+        console.log('Notification saved');
+    })
+    .catch((err) => {
+        console.log('Error saving notification: ', err);
+    });
+    response.status(200).send("Request has been approved for book: " + book_id + " user: "+ user_id)
 })
 
 module.exports = approveRouter
