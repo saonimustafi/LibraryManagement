@@ -119,7 +119,7 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
                 }
             )
 
-            response.status(201).send("New check-out request created with book: " + bookDetail.name + " for the user: "+userDetail.name)
+            response.status(201).send("New check-out request created with book: " + bookDetail.title + " for the user: "+userDetail.name)
             return
         }
 
@@ -135,7 +135,7 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
                 }
             )
 
-            response.status(201).send("Check-out request updated with book: " + bookDetail.name + " for the user: "+userDetail.name)
+            response.status(201).send("Check-out request updated with book: " + bookDetail.title + " for the user: "+userDetail.name)
             return
         }
     }

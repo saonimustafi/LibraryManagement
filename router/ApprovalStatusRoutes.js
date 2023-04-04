@@ -85,6 +85,45 @@ approveRouter.get("/allrequests/:user_id", async(request, response) => {
     }
 })
 
+approveRouter.get("/allrequests/:user_id/:book_id", async(request, response) => {
+    const user_id = request.params.user_id
+    const book_id = request.params.book_id
+
+    try {
+        const bookRequestForUser = await requestModel.aggregate([{$match: { "user_id": Number(user_id) }},{$project:
+                {books: {
+                        $filter: {
+                            input: "$books",
+                            as: "book",
+                            cond: {
+                                $and:[
+                                    {$eq: ["$$book.book_id", Number(book_id)]},
+                                    {$eq: ["$$book.approvalStatus", "Pending"]}
+                                ]
+                            }
+                        }
+                    }
+                }
+        },
+            {
+                $match: {
+                    "books.approvalStatus": "Pending"
+                }
+            }
+        ])
+        if(!bookRequestForUser || bookRequestForUser[0].books.length == 0) {
+            response.status(404).send("Book is not pending to approve")
+            return
+        }
+        response.status(200).send(bookRequestForUser)
+    }
+    catch(error) {
+        console.error(error)
+        response.status(500).send("GET operation failed while retrieving pending request for the book")
+    }
+})
+
+
 // PUT Operator - Bulk approve/decline for a user
 approveRouter.put("/bulkapproverequests/:user_id", async(request, response) => {
     const user_id = request.params.user_id
@@ -260,7 +299,7 @@ approveRouter.put("/approverequests/:user_id/:book_id", async(request, response)
         // If the book is not present in the requests raised by the user
         const bookRequest = await requestModel.find({user_id: user_id, "books.book_id": Number(book_id)})
         if(!bookRequest) {
-            response.status(404).send("Book request for book: "+ book.name +" does not exist for user: "+userDetail.name)
+            response.status(404).send("Book request for book: "+ book.title +" does not exist for user: "+userDetail.name)
             return
         }
 
@@ -319,7 +358,7 @@ approveRouter.put("/approverequests/:user_id/:book_id", async(request, response)
                         }
                 }
             )
-            response.status(200).send("Request has been approved for book: " + book.name + " user: "+ userDetail.name)
+            response.status(200).send("Request has been approved for book: " + book.title + " user: "+ userDetail.name)
             return
         }
     }
@@ -331,27 +370,48 @@ approveRouter.put("/approverequests/:user_id/:book_id", async(request, response)
 
 // PUT Operator - To approve individual request
 approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(request, response) => {
+
     const user_id = request.params.user_id
     const book_id = request.params.book_id
 
     try {
-        const userDetail = await userModel.findOne({id: user_id})
-        const approvalRequestsForUser = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": "Pending"})
-        const userActivities = await userActivitiesModel.findOne({user_id: user_id, "booksBorrowed.$.returnDate": {$gt: Date.now()} })
+        const userDetail = await userModel.findOne({id: Number(user_id)})
+        const book = await bookModel.findOne({id: Number(book_id)})
 
-        if(!approvalRequestsForUser || approvalRequestsForUser.books.length == 0) {
+        const pendingBookRequestForUser = await requestModel.aggregate([{$match: {"user_id": Number(user_id)}}, {$project:
+                {books: {$filter: {input: "$books", as: "book",
+                            cond: {$and: [{$eq: ["$$book.book_id", Number(book_id)]}, {$eq: ["$$book.approvalStatus", 'Pending']}]}}
+                    }
+                }},{$match: {"books.approvalStatus": 'Pending'}}
+        ])
+
+        const approvedRequestsForUser = await requestModel.aggregate([{$match: { "user_id": Number(user_id) }},{$project:
+                {books: {$filter: {input: "$books", as: "book",
+                            cond: {$and: [{$eq: ["$$book.checkOutDate", null]}, {$eq: ["$$book.approvalStatus", "Approved"]}]}}
+                    }
+                }}, {$match: {"books.approvalStatus": 'Approved'}}
+        ])
+
+        const userActivities = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}},{$project:
+                {booksBorrowed: { $filter: {input: "$booksBorrowed",as: "borrowed",
+                            cond: {$gt: ["$$borrowed.returnDate", Date.now()]}}
+                    }}
+        }])
+
+        if( !pendingBookRequestForUser) {
             response.status(404).send("Requests don't exist for the user:"+userDetail.name)
             return
         }
 
-        const userBooksRequests = approvalRequestsForUser.books
+        const booksCheckedOut = (userActivities.length == 0)? 0 : userActivities[0].booksBorrowed.length //numberOfBooksBorrowed
+        const approvedBooks = (approvedRequestsForUser.length == 0)? 0 : approvedRequestsForUser[0].books.length
 
-        if(userActivities !== null && userActivities.booksBorrowed.length == maxBooks) {
+        if(userActivities !== null && booksCheckedOut + approvedBooks == maxBooks) {
             response.status(200).send("Please decline the request as the user has already borrowed maximum books")
             return
         }
-        else if (userActivities.booksBorrowed.length < maxBooks && userActivities.booksBorrowed.length + 1 <= maxBooks) {
-            await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
+        else if (booksCheckedOut < maxBooks && approvedBooks < maxBooks && booksCheckedOut + approvedBooks + 1 <= maxBooks) {
+            await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
                 {$set:
                         {"books.$.approvalStatus": 'Approved',
                             "books.$.approvedOrRejectedDate": Date.now(),
@@ -359,7 +419,7 @@ approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(
                         }
                 }
             )
-            response.status(200).send("Request has been approved for book: " + book.name + " user: "+ userDetail.name)
+            response.status(200).send("Request has been approved for book: " + book.title + " user: "+ userDetail.name)
             return
         }
     }
@@ -375,19 +435,40 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
     const book_id = request.params.book_id
 
     try {
-        const userDetail = await userModel.findOne({id: user_id})
-        const approvalRequestsForUser = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": "Pending"})
-        const userActivities = await userActivitiesModel.findOne({user_id: user_id, "booksBorrowed.$.returnDate": {$gt: Date.now()} })
+        const userDetail = await userModel.findOne({id: Number(user_id)})
 
-        if(!approvalRequestsForUser || approvalRequestsForUser.books.length == 0) {
+        const book = await bookModel.findOne({id: Number(book_id)})
+
+        const pendingBookRequestForUser = await requestModel.aggregate([{$match: {"user_id": Number(user_id)}}, {$project:
+                {books: {$filter: {input: "$books", as: "book",
+                            cond: {$and: [{$eq: ["$$book.book_id", Number(book_id)]}, {$eq: ["$$book.approvalStatus", 'Pending']}]}}
+                    }
+                }},{$match: {"books.approvalStatus": 'Pending'}}
+        ])
+
+        const userActivities = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}},{$project:
+                {booksBorrowed: { $filter: {input: "$booksBorrowed",as: "borrowed",
+                            cond: {$gt: ["$$borrowed.returnDate", Date.now()]}}
+                    }}
+        }])
+
+        const approvedRequestsForUser = await requestModel.aggregate([{$match: { "user_id": Number(user_id) }},{$project:
+                {books: {$filter: {input: "$books", as: "book",
+                            cond: {$and: [{$eq: ["$$book.checkOutDate", null]}, {$eq: ["$$book.approvalStatus", "Approved"]}]}}
+                    }
+                }}, {$match: {"books.approvalStatus": 'Approved'}}
+        ])
+
+        if(!pendingBookRequestForUser) {
             response.status(404).send("Requests don't exist for the user:"+userDetail.name)
             return
         }
 
-        const userBooksRequests = approvalRequestsForUser.books
+        const booksCheckedOut = (userActivities.length == 0)? 0 : userActivities[0].booksBorrowed.length
+        const approvedBooks = (approvedRequestsForUser.length == 0)? 0 : approvedRequestsForUser[0].books.length
 
-        if(userActivities !== null && userActivities.booksBorrowed.length == maxBooks) {
-            await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
+        if(userActivities !== null && approvedBooks + booksCheckedOut == maxBooks) {
+            await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
                 {$set:
                         {"books.$.approvalStatus": 'Declined',
                             "books.$.approvedOrRejectedDate": Date.now(),
@@ -395,21 +476,22 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
                         }
                 }
             )
-            await bookModel.updateOne({id: book_id}, {$inc: {count: +1}})
+
+            await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
             response.status(200).send("The user has already borrowed maximum books")
             return
         }
 
-        await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
+        await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
             {$set:
                     {"books.$.approvalStatus": 'Declined',
                         "books.$.approvedOrRejectedDate": Date.now(),
-                        "books.$.comments": "You already have maximum books borrowed"
+                        "books.$.comments": "Request Declined"
                     }
             }
         )
-        await bookModel.updateOne({id: book_id}, {$inc: {count: +1}})
-        response.status(200).send("Request declined")
+        await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
+        response.status(200).send("Request declined for book: " + book.title + " user: "+ userDetail.name)
         return
     }
     catch(error) {
@@ -419,44 +501,44 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
 })
 
 // PUT Operator - To approve individual request
-approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(request, response) => {
-    const user_id = request.params.user_id
-    const book_id = request.params.book_id
-
-    try {
-        const userDetail = await userModel.findOne({id: user_id})
-        const approvalRequestsForUser = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": "Pending"})
-        const userActivities = await userActivitiesModel.findOne({user_id: user_id, "booksBorrowed.$.returnDate": {$gt: Date.now()} })
-
-        if(!approvalRequestsForUser || approvalRequestsForUser.books.length == 0) {
-            response.status(404).send("Requests don't exist for the user:"+userDetail.name)
-            return
-        }
-
-        const userBooksRequests = approvalRequestsForUser.books
-
-        if(userActivities !== null && userActivities.booksBorrowed.length == maxBooks) {
-            response.status(200).send("Please decline the request as the user has already borrowed maximum books")
-            return
-        }
-        else if (userActivities.booksBorrowed.length < maxBooks && userActivities.booksBorrowed.length + 1 <= maxBooks) {
-            await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
-                {$set:
-                        {"books.$.approvalStatus": 'Approved',
-                            "books.$.approvedOrRejectedDate": Date.now(),
-                            "books.$.comments": "Request approved. Ready for checkout"
-                        }
-                }
-            )
-            response.status(200).send("Request has been approved for book: " + book.name + " user: "+ userDetail.name)
-            return
-        }
-    }
-    catch(error) {
-        console.error(error)
-        response.status(500).send("PUT operation failed while approving user request for the book")
-    }
-})
+// approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(request, response) => {
+//     const user_id = request.params.user_id
+//     const book_id = request.params.book_id
+//
+//     try {
+//         const userDetail = await userModel.findOne({id: user_id})
+//         const approvalRequestsForUser = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": "Pending"})
+//         const userActivities = await userActivitiesModel.findOne({user_id: user_id, "booksBorrowed.$.returnDate": {$gt: Date.now()} })
+//
+//         if(!approvalRequestsForUser || approvalRequestsForUser.books.length == 0) {
+//             response.status(404).send("Requests don't exist for the user:"+userDetail.name)
+//             return
+//         }
+//
+//         const userBooksRequests = approvalRequestsForUser.books
+//
+//         if(userActivities !== null && userActivities.booksBorrowed.length == maxBooks) {
+//             response.status(200).send("Please decline the request as the user has already borrowed maximum books")
+//             return
+//         }
+//         else if (userActivities.booksBorrowed.length < maxBooks && userActivities.booksBorrowed.length + 1 <= maxBooks) {
+//             await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
+//                 {$set:
+//                         {"books.$.approvalStatus": 'Approved',
+//                             "books.$.approvedOrRejectedDate": Date.now(),
+//                             "books.$.comments": "Request approved. Ready for checkout"
+//                         }
+//                 }
+//             )
+//             response.status(200).send("Request has been approved for book: " + book.name + " user: "+ userDetail.name)
+//             return
+//         }
+//     }
+//     catch(error) {
+//         console.error(error)
+//         response.status(500).send("PUT operation failed while approving user request for the book")
+//     }
+// })
 
 // Dummy approve route for checking notifications
 approveRouter.post('/requests/aveekapprove/:user_id/:book_id', async(request, response) => {

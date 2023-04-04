@@ -46,7 +46,7 @@ bookRouter.get('/books/:id', async(request, response) => {
 bookRouter.post('/books/newbook', async (request, response) => {
     try {
         const newBook = new bookModel(request.body)
-        const book = await bookModel.findOne({name : newBook.name})
+        const book = await bookModel.findOne({title : newBook.title})
         if(!book) {
             const book = await bookModel.create(newBook)
             response.status(201).send(book)

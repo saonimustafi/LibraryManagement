@@ -9,7 +9,7 @@ const RequestSchema = new mongoose.Schema({ //Also has borrow details
             type: Number,
             required: true
         },
-        name: {
+        title: {
             type: String,
             required: true
         },

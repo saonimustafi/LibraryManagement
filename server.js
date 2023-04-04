@@ -16,7 +16,7 @@ const SearchRouter = require('./router/SearchRoutes');
 
 
 const app = express()
-const port = 3000
+const port = 3001
 
 // Create connection to mongoose
 // console.log("Mongoose status = "+mongoose.connection.readyState);

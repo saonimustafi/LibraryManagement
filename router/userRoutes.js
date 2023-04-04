@@ -36,6 +36,23 @@ userRouter.get('/users/:id', async (request, response) => {
     }
 })
 
+// GET Operator - Retrieve user information by email id
+userRouter.get('/users/searchemail/:email', async (request, response) => {
+    const email = request.params.email
+    try {
+        const user = await userModel.findOne({email: email})
+        if(!user) {
+            response.status(404).send("User does not exist")
+            return
+        }
+        response.status(200).send(user)
+    }
+    catch(error) {
+        console.error(error)
+        response.status(500).send('GET operation failed while fetching user')
+    }
+})
+
 // POST Operator
 userRouter.post('/users/newuser', async (request, response) => {
     try{
