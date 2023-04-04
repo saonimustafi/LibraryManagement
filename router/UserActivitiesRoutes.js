@@ -74,31 +74,41 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
     const user_id = request.params.user_id
     const book_id = request.params.book_id
     try {
-        const userDetail = await userModel.findOne({id: user_id})
-        const bookDetail = await bookModel.findOne({id: book_id})
-        const approvedBookRequest = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": 'Approved'})
+        const userDetail = await userModel.findOne({id: Number(user_id)})
+        const bookDetail = await bookModel.findOne({id: Number(book_id)})
+
+        // const approvedBookRequest = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": 'Approved'})
+
+        const approvedBookRequest = await requestModel.aggregate([{$match: {"user_id": Number(user_id)}}, {$project:
+                {books: {$filter: {input: "$books", as: "book",
+                            cond: {$and: [{$eq: ["$$book.book_id", Number(book_id)]}, {$eq: ["$$book.approvalStatus", 'Approved']}]}}
+                    }
+                }},{$match: {"books.approvalStatus": 'Approved'}}
+        ])
 
         // If there are no approved requests for the user
         if(!approvedBookRequest) {
-            response.status(404).send("There are no approved requests for the user")
+            response.status(404).send("The book has not been requested or it has not been approved")
             return
         }
 
         // Calculate the return date of the book for the user based on the check-out date
-        const checkOutDateForUser = Date.now();
+        const checkOutDateForUserTemp = Date.now()
+        const checkOutDateForUser = new Date(checkOutDateForUserTemp)
 
         const currentDate = new Date(checkOutDateForUser)
-        currentDate.setMonth(currentDate.getMonth()+3)
+        // currentDate.setMonth(currentDate.getMonth()+3)
+
         const returnYear = currentDate.getFullYear()
-        const returnMonth = currentDate.getMonth() + 1
+        const returnMonth = currentDate.getMonth() + 2
         const returnDay = currentDate.getDate()
 
         const returnDateString = `${returnYear}-${returnMonth}-${returnDay}`
         const returnDateForUser = new Date(returnDateString)
 
-        // Create the object of the new book borrowed and update the same in MongoDB
-        const userDetailsPresent  = await userActivitiesModel.findOne({user_id: user_id})
+        const userDetailsPresent  = await userActivitiesModel.findOne({user_id: Number(user_id)})
 
+        // Create the object of the new book borrowed and update the same in MongoDB
         let newBooksBorrowed = {
             "book_id": book_id,
             "checkOutDate": checkOutDateForUser,
@@ -113,9 +123,10 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
         // the user in the userActivity and update the checkOut date in the request model
         if(!userDetailsPresent) {
             await userActivitiesModel.create(newCheckOutForUser)
-            await approvedBookRequest.updateOne({user_id: user_id, "books.book_id": book_id},
+            await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
                 {$set :
-                        {"books.$.checkOutDate": checkOutDateForUser}
+                        {"books.$.checkOutDate": checkOutDateForUser,
+                         "books.$.comments": "Book has been checked-out by the user"}
                 }
             )
 
@@ -124,14 +135,17 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
         }
 
         // If the user id is present and has past records - Update the request model and
-        // push the new request to the existing user id in the userActivity model and  the request model
+        // push the new request to the existing user id in the userActivity model and update the request model
         else {
             userDetailsPresent.booksBorrowed.push(newBooksBorrowed)
             await userDetailsPresent.save()
 
-            await approvedBookRequest.updateOne({user_id: user_id, "books.book_id": book_id},
+            await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
                 {$set :
-                        {"books.$.checkOutDate": checkOutDateForUser}
+                        {"books.$.checkOutDate": checkOutDateForUser,
+                         "books.$.comments": "Book has been checked-out by the user"
+                        }
+
                 }
             )
 
