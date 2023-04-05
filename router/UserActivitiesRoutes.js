@@ -46,27 +46,35 @@ UserActivitiesRouter.get('/checkout/:user_id', async(request, response) => {
 		console.log(error)
 		response.json({ status: 'error', error: 'invalid token' })
 	}
-
+})
     // response.status(200).send(mockData);
 
+UserActivitiesRouter.get('/checkoutdetails/:user_id', async(request, response) => {
 
+    const user_id = request.params.user_id
 
-    // const user_id = request.params.user_id
-    // try {
-    //     const userDetail = await userModel.findOne({id: user_id})
-    //     const userActivityDetail = await userActivitiesModel.findOne({user_id: user_id})
+    try {
+        // const userDetail = await userModel.findOne({id: Number(user_id)})
+        // const userActivityDetail = await userActivitiesModel.findOne({user_id: Number(user_id)})
 
-    //     // If no activity for the user exists
-    //     if(!userActivityDetail) {
-    //         response.status(404).send("No activity found for user: "+userDetail.name)
-    //         return
-    //     }
-    //     response.status(200).send(userActivityDetail)
-    // }
-    // catch(error) {
-    //     console.error(error)
-    //     response.status(500).send("GET Operation failed while retrieving activity information for the user")
-    // }
+        const userActivityDetail = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}}, {$project:
+                {books: {$filter: {input: "$booksBorrowed", as: "book",
+                            cond: {$ne: ["$$book.checkoutDate", null]}}}
+                    }
+                }
+        ])
+
+        // If no activity for the user exists
+        if(!userActivityDetail) {
+            response.status(404).send({"message":"No activity found for user"})
+            return
+        }
+        response.status(200).send(userActivityDetail)
+    }
+    catch(error) {
+        console.error(error)
+        response.status(500).send({"message":"GET Operation failed while retrieving activity information for the user"})
+    }
 })
 
 // PUT Operator - User tries to check out the approved book requests
@@ -88,7 +96,7 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
 
         // If there are no approved requests for the user
         if(!approvedBookRequest) {
-            response.status(404).send("The book has not been requested or it has not been approved")
+            response.status(404).send({"message":"The book has not been requested or it has not been approved"})
             return
         }
 
@@ -130,7 +138,7 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
                 }
             )
 
-            response.status(201).send("New check-out request created with book: " + bookDetail.title + " for the user: "+userDetail.name)
+            response.status(201).send({"checkOutDate":checkOutDateForUser, "returnDate":returnDateForUser})
             return
         }
 
@@ -149,13 +157,13 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
                 }
             )
 
-            response.status(201).send("Check-out request updated with book: " + bookDetail.title + " for the user: "+userDetail.name)
+            response.status(201).send({"checkOutDate":checkOutDateForUser, "returnDate":returnDateForUser})
             return
         }
     }
     catch(error) {
         console.error(error)
-        response.status(500).send("PUT Operation failed while checking out for the user")
+        response.status(500).send({"message":"PUT Operation failed while checking out for the user"})
     }
 })
 

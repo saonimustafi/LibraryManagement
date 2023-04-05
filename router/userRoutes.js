@@ -8,14 +8,14 @@ userRouter.get('/users', async (request, response) => {
         console.log('Fetching users...')
         const users = await userModel.find({})
         if(!users) {
-            response.status(404).send("No users found")
+            response.status(404).send({"message":"No users found"})
             return
         }
         response.status(200).send(users)
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('GET operation failed while fetching user')
+        response.status(500).send({"message":"GET operation failed while fetching user"})
     }
 })
 
@@ -23,16 +23,16 @@ userRouter.get('/users', async (request, response) => {
 userRouter.get('/users/:id', async (request, response) => {
     const user_id = request.params.id
     try {
-        const user = await userModel.findOne({id: user_id})
+        const user = await userModel.findOne({id: Number(user_id)})
         if(!user) {
-            response.status(404).send("User does not exist")
+            response.status(404).send({"message":"User does not exist"})
             return
         }
         response.status(200).send(user)
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('GET operation failed while fetching user')
+        response.status(500).send({"message":"GET operation failed while fetching user"})
     }
 })
 
@@ -42,14 +42,14 @@ userRouter.get('/users/searchemail/:email', async (request, response) => {
     try {
         const user = await userModel.findOne({email: email})
         if(!user) {
-            response.status(404).send("User does not exist")
+            response.status(404).send({"message": "User does not exist"})
             return
         }
         response.status(200).send(user)
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('GET operation failed while fetching user')
+        response.status(500).send({"message":"GET operation failed while fetching user"})
     }
 })
 
@@ -62,7 +62,7 @@ userRouter.post('/users/newuser', async (request, response) => {
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('POST operation failed while creating user')
+        response.status(500).send({"message":"POST operation failed while creating user"})
     }
 })
 
@@ -74,7 +74,7 @@ userRouter.put('/users/updateuser/:id', async (request, response) => {
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('PUT operation failed while updating user')
+        response.status(500).send({"message":"PUT operation failed while updating user"})
     }
 })
 
@@ -86,7 +86,7 @@ userRouter.delete('/users/deleteusers/:id', async(request, response) => {
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('DELETE operation failed while deleting user')
+        response.status(500).send({"message":"DELETE operation failed while deleting user"})
     }
 })
 
