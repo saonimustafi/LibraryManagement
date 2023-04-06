@@ -105,7 +105,6 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
         const checkOutDateForUser = new Date(checkOutDateForUserTemp)
 
         const currentDate = new Date(checkOutDateForUser)
-        // currentDate.setMonth(currentDate.getMonth()+3)
 
         const returnYear = currentDate.getFullYear()
         const returnMonth = currentDate.getMonth() + 2
@@ -131,7 +130,7 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
         // the user in the userActivity and update the checkOut date in the request model
         if(!userDetailsPresent) {
             await userActivitiesModel.create(newCheckOutForUser)
-            await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
+            await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
                 {$set :
                         {"books.$.checkOutDate": checkOutDateForUser,
                          "books.$.comments": "Book has been checked-out by the user"}
@@ -157,7 +156,7 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
                 }
             )
 
-            response.status(201).send({"checkOutDate":checkOutDateForUser, "returnDate":returnDateForUser})
+            response.status(200).send({"checkOutDate":checkOutDateForUser, "returnDate":returnDateForUser})
             return
         }
     }

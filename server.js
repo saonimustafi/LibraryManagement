@@ -11,8 +11,9 @@ const UserActivitiesRouter = require('./router/UserActivitiesRoutes')
 const approveRouter = require('./router/ApprovalStatusRoutes')
 const returnBooksRouter = require('./router/returnBooksRoutes')
 const renewBookRouter = require('./router/renewBookRoutes')
-const UserAuthRouter = require('./router/UserAuthRouter');
-const SearchRouter = require('./router/SearchRoutes');
+const UserAuthRouter = require('./router/UserAuthRouter')
+const SearchRouter = require('./router/SearchRoutes')
+const FineRouter = require('./router/FineRoutes')
 
 
 const app = express()
@@ -43,6 +44,7 @@ app.use('/', returnBooksRouter)
 app.use('/', renewBookRouter)
 app.use('/', UserAuthRouter)
 app.use('/', UserActivitiesRouter)
+app.use('/', FineRouter)
 
 
 // Start server on port

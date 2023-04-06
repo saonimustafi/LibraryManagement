@@ -25,6 +25,10 @@ const userActivitiesSchema = new mongoose.Schema({
         fineToPay: {
             type: Number,
             default: 0
+        },
+        finePaid: {
+            type: Boolean,
+            default: false
         }
     }]
 })

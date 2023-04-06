@@ -20,7 +20,7 @@ SearchRouter.get('/search', async (request, response) => {
         }
         catch(error) {
             console.error(error)
-            response.send(500).status("GET operation failed while fetching book: "+book_id)
+            response.status(500).send("GET operation failed while fetching book: "+book_id)
         }
     } else {
         try {        
@@ -37,7 +37,7 @@ SearchRouter.get('/search', async (request, response) => {
         }
         catch(error) {
             console.error(error)
-            response.send(500).status("GET operation failed while fetching book: "+book_id)
+            response.status(500).send("GET operation failed while fetching book: "+book_id)
         }
     }
     
