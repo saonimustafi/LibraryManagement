@@ -9,8 +9,8 @@ requestRouter.get('/requests/:user_id', async (request, response) => {
     const user_id = request.params.user_id
     
     try {
-        const userDetail = await userModel.findOne({id: user_id})
-        const requests = await requestModel.findOne({user_id: user_id})
+        const userDetail = await userModel.findOne({id: Number(user_id)})
+        const requests = await requestModel.findOne({user_id: Number(user_id)})
 
         if(requests && requests.books.length != 0) {
             response.status(200).send(requests)

@@ -13,7 +13,7 @@ const returnBooksRouter = require('./router/returnBooksRoutes')
 const renewBookRouter = require('./router/renewBookRoutes')
 const UserAuthRouter = require('./router/UserAuthRouter')
 const SearchRouter = require('./router/SearchRoutes')
-const FineRouter = require('./router/FineRoutes')
+const FineRouter = require('./router/FineRouter')
 
 
 const app = express()

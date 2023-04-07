@@ -2,32 +2,28 @@ const express = require('express')
 const FineRouter = express.Router()
 const userActivitiesModel = require('../models/UserActivities')
 // const userModel = require('../models/users')
-// const bookModel = require("../models/books")
-// const requestModel = require("../models/request")
 const finePerDay = 2
 
 FineRouter.get('/getfinedetails/:user_id', async(request, response) => {
     const user_id = request.params.user_id
 
     try {
-        const userActivityDetail = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}}, {$project:
-                {books: {$filter: {input: "$booksBorrowed", as: "book",cond: {$eq: ["$$book.actualReturnDate", null]}}}}}
-        ])
+        const userActivityDetail = await userActivitiesModel.find({user_id: Number(user_id)})
 
-        if(!userActivityDetail) {
-            response.status(404).send({"message":"No book borrowing history exists for this user"})
+        if(userActivityDetail.length == 0 ) {
+            response.status(404).send({"message":"No fine details exist for this user"})
             return
         }
-        const booksBorrowedDetail = userActivityDetail[0].books
+
+        const booksBorrowedDetail = userActivityDetail[0].booksBorrowed
 
         const currentDate = new Date(Date.now())
         currentDate.setHours(0,0,0,0)
 
-
         for(let bookIndex = 0; bookIndex < booksBorrowedDetail.length; bookIndex++) {
-            var book_id = userActivityDetail[0].books[bookIndex].book_id
+            var book_id = booksBorrowedDetail[bookIndex].book_id
 
-            if(currentDate > userActivityDetail[0].books[bookIndex].returnDate) {
+            if(booksBorrowedDetail[bookIndex].finePaid === false && booksBorrowedDetail[bookIndex].actualReturnDate === null && currentDate > booksBorrowedDetail[bookIndex].returnDate) {
                 var returnDate = userActivityDetail[0].books[bookIndex].returnDate
 
                 var DiffInMS = currentDate.getTime() - returnDate.getTime()
@@ -39,15 +35,13 @@ FineRouter.get('/getfinedetails/:user_id', async(request, response) => {
                     {$set: {"booksBorrowed.$.fineToPay": currentFine}})
 
             }
-            else {
+            else if(booksBorrowedDetail[bookIndex].finePaid === false && booksBorrowedDetail[bookIndex].actualReturnDate === null && currentDate < booksBorrowedDetail[bookIndex].returnDate) {
                 await userActivitiesModel.updateOne({user_id: Number(user_id), "booksBorrowed.book_id": Number(book_id)},
                     {$set: {"booksBorrowed.$.fineToPay": 0}})
             }
         }
 
-        const userFineDetail = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}}, {$project:
-                {books: {$filter: {input: "$booksBorrowed", as: "book",cond: {$eq: ["$$book.actualReturnDate", null]}}}}}
-        ])
+        const userFineDetail = await userActivitiesModel.find({user_id: Number(user_id)})
 
         response.status(200).send(userFineDetail)
     }
