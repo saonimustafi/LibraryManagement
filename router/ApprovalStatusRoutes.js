@@ -394,7 +394,7 @@ approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(
 
         const userActivities = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}},{$project:
                 {booksBorrowed: { $filter: {input: "$booksBorrowed",as: "borrowed",
-                            cond: {$gt: ["$$borrowed.returnDate", Date.now()]}}
+                            cond: {$and: [{$gt: ["$$borrowed.returnDate", Date.now()]}, {$eq:["$$borrowed.actualReturnDate", null]}]}}
                     }}
         }])
 
@@ -420,7 +420,7 @@ approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(
                         }
                 }
             )
-            response.status(200).send({"approvalDate":approvalDate})
+            response.status(200).send({"approvalDate":approvalDate, "approvalStatus": "Approved"})
             return
         }
     }
@@ -449,7 +449,7 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
 
         const userActivities = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}},{$project:
                 {booksBorrowed: { $filter: {input: "$booksBorrowed",as: "borrowed",
-                            cond: {$gt: ["$$borrowed.returnDate", Date.now()]}}
+                            cond: {$and: [{$gt: ["$$borrowed.returnDate", Date.now()]}, {$eq:["$$borrowed.actualReturnDate", null]}]}}
                     }}
         }])
 
@@ -494,8 +494,9 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
                     }
             }
         )
+
         await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
-        response.status(200).send({"rejectDate":rejectDate})
+        response.status(200).send({"rejectDate":rejectDate, "approvalStatus":"Declined"})
         return
     }
     catch(error) {

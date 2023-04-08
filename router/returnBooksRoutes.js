@@ -86,7 +86,7 @@ returnBooksRouter.put('/return/:user_id/:book_id', async(request, response) => {
         // Increase the count of the book in the book inventory after the return
         await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
 
-        response.status(200).send({"message":"Return Date has been added for the book owned by the user"})
+        response.status(200).send({"actualReturnDate":actualReturnDate})
     }
     catch(error) {
         console.error(error)
