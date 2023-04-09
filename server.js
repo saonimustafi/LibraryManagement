@@ -17,7 +17,7 @@ const FineRouter = require('./router/FineRouter')
 
 
 const app = express()
-const port = 3001
+const port = 3000
 
 // Create connection to mongoose
 // console.log("Mongoose status = "+mongoose.connection.readyState);
