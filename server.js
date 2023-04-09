@@ -6,12 +6,12 @@ const socketIO = require('./utils/socket');
 
 const bookRouter = require('./router/bookRoutes')
 const userRouter = require('./router/userRoutes')
+const UserAuthRouter = require('./router/UserAuthRoutes')
 const requestRouter = require('./router/RequestRoutes')
 const UserActivitiesRouter = require('./router/UserActivitiesRoutes')
 const approveRouter = require('./router/ApprovalStatusRoutes')
 const returnBooksRouter = require('./router/returnBooksRoutes')
 const renewBookRouter = require('./router/renewBookRoutes')
-const UserAuthRouter = require('./router/UserAuthRouter')
 const SearchRouter = require('./router/SearchRoutes')
 const FineRouter = require('./router/FineRouter')
 
