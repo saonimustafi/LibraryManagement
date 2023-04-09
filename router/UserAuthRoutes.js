@@ -3,7 +3,6 @@ const UserAuthRoutes = express.Router()
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const userModel = require('../models/users')
-const shortid = require('shortid');
 
 UserAuthRoutes.post('/users/newuser', async (req, res) => {
 	console.log(req.body)
@@ -17,14 +16,6 @@ UserAuthRoutes.post('/users/newuser', async (req, res) => {
 			password: newPassword
 		})
         const user = await userModel.create(newUser)
-
-		// await userModel.create({
-		// 	name: req.body.name,
-		// 	email: req.body.email,
-		// 	password: newPassword
-		// })
-		// res.json({ status: 'ok' })
-
 		return res.status(201).send({ status: 'ok', user: user })
 	} catch (err) {
 		// res.json({ status: 'error', error: 'Duplicate email' })
@@ -32,7 +23,7 @@ UserAuthRoutes.post('/users/newuser', async (req, res) => {
 	}
 })
 
-UserAuthRoutes.post('/login', async (req, res) => {
+UserAuthRoutes.post('/users/login', async (req, res) => {
 	const user = await userModel.findOne({
 		email: req.body.email,
 	})
@@ -70,7 +61,7 @@ UserAuthRoutes.get('/checkLoggedIn', async (req, res) => {
 		const email = decoded.email
 		const user = await userModel.findOne({ email: email })
 		// return res.json({ status: 'ok', email: user.email })
-		res.status(200).send({email: user.email})
+		res.status(200).send({status: 'ok', email: user.email, name: user.name})
 	} catch (error) {
 		console.log(error)
 		// res.json({ status: 'error', error: 'invalid token' })
