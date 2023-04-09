@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+
 const UserSchema = new mongoose.Schema({
     id :{
         type: Number,
@@ -7,7 +8,7 @@ const UserSchema = new mongoose.Schema({
     },
     name: {
         type: String,
-        // required: [true, 'Please enter name']
+        required: [true, 'Please enter name']
     },
     email: {
         type: String,

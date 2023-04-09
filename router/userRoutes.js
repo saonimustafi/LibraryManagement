@@ -54,17 +54,17 @@ userRouter.get('/users/searchemail/:email', async (request, response) => {
 })
 
 // POST Operator
-userRouter.post('/users/newuser', async (request, response) => {
-    try{
-        const newUser = new userModel(request.body)
-        const user = await userModel.create(newUser)
-        response.status(201).send(user)
-    }
-    catch(error) {
-        console.error(error)
-        response.status(500).send({"message":"POST operation failed while creating user"})
-    }
-})
+// userRouter.post('/users/newuser', async (request, response) => {
+//     try{
+//         const newUser = new userModel(request.body)
+//         const user = await userModel.create(newUser)
+//         response.status(201).send(user)
+//     }
+//     catch(error) {
+//         console.error(error)
+//         response.status(500).send({"message":"POST operation failed while creating user"})
+//     }
+// })
 
 // PUT Operator
 userRouter.put('/users/updateuser/:id', async (request, response) => {
