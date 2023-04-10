@@ -23,6 +23,26 @@ UserAuthRoutes.post('/users/newuser', async (req, res) => {
 	}
 })
 
+UserAuthRoutes.post('/users/newadminuser', async (req, res) => {
+	console.log(req.body)
+	try {
+		const newPassword = await bcrypt.hash(req.body.password, 10)
+
+		const newUser = new userModel({
+			id: Math.floor(Math.random() * 1000000),
+			name: req.body.name,
+			email: req.body.email,
+			password: newPassword,
+			role: 'admin'
+		})
+        const user = await userModel.create(newUser)
+		return res.status(201).send({ status: 'ok', user: user })
+	} catch (err) {
+		// res.json({ status: 'error', error: 'Duplicate email' })
+		return res.status(500).send({"message":"POST operation failed while creating user"})
+	}
+})
+
 UserAuthRoutes.post('/users/login', async (req, res) => {
 	const user = await userModel.findOne({
 		email: req.body.email,
