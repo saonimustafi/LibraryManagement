@@ -42,6 +42,8 @@ UserAuthRoutes.post('/users/login', async (req, res) => {
 			{
 				name: user.name,
 				email: user.email,
+				id: user.id,
+				role: user.role
 			},
 			'secret123'
 		)
@@ -61,7 +63,7 @@ UserAuthRoutes.get('/checkLoggedIn', async (req, res) => {
 		const email = decoded.email
 		const user = await userModel.findOne({ email: email })
 		// return res.json({ status: 'ok', email: user.email })
-		res.status(200).send({status: 'ok', email: user.email, name: user.name})
+		res.status(200).send({status: 'ok', email: user.email, name: user.name, id: user.id, role: user.role})
 	} catch (error) {
 		console.log(error)
 		// res.json({ status: 'error', error: 'invalid token' })
