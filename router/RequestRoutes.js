@@ -12,11 +12,13 @@ requestRouter.get('/requests/:user_id', async (request, response) => {
         const userDetail = await userModel.findOne({id: Number(user_id)})
         const requests = await requestModel.findOne({user_id: Number(user_id)})
 
+        // response.status(200).send(requests)
+
         if(requests && requests.books.length != 0) {
             response.status(200).send(requests)
         }
         else {
-            response.status(404).send("No requests exist for the user: "+userDetail.name)
+            response.status(200).send({})
         }
     }
     catch(error) {
@@ -60,6 +62,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
                     "book_id": book_id,
                     "title":book.title,
                     "author": book.author,
+                    "image": book.image,
                     "requestDate": Date.now(),
                     "approvalStatus": "Pending",
                     "approvedOrRejectedDate": null,
@@ -73,11 +76,11 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
                 // Decrease the count of the book in the books DB
                 await bookModel.updateOne({id : Number(book_id)}, {$inc : {count : -1}})
 
-                response.status(201).send("Book added to Request Bucket for user: "+userDetail.name)
+                response.status(201).send({"message":`Book added to Request Bucket for user: ${userDetail.name}`})
             }
             // If the count of book == 0
             else {
-                response.status(200).send("Book not available in the library")
+                response.status(200).send({"message":"Book not available in the library"})
                 return
             }
         }
@@ -90,6 +93,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
                     "book_id": book_id,
                     "title":book.title,
                     "author": book.author,
+                    "image": book.image,
                     "requestDate": Date.now(),
                     "approvalStatus": "Pending",
                     "checkoutDate": null
@@ -107,7 +111,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
     }
     catch(error) {
         console.error(error)
-        response.status(500).send("POST operation failed to add new requests for user")
+        response.status(500).send({"message":"POST operation failed to add new requests for user"})
     }
 })
 
@@ -122,7 +126,7 @@ requestRouter.delete('/requests/deleterequests/:user_id/:book_id',async(request,
 
         // If request bucket for user is not found
         if(!requestBucket) {
-            response.status(404).send("Request bucket not found")
+            response.status(404).send({"message":"Request bucket not found"})
             return
         }
 
@@ -139,25 +143,25 @@ requestRouter.delete('/requests/deleterequests/:user_id/:book_id',async(request,
             // If after book deletion from request bucket, there are no more books, delete the request bucket for the user entirely
             if(requestBucketAfterDeletion.books.length === 0) {
                 await requestModel.deleteOne({user_id : user_id})
-                response.status(200).send("Book deleted from request & request bucket for the user has been removed")
+                response.status(200).send({"message":"Book deleted from request & request bucket for the user has been removed"})
                 return
             }
 
             // If there are book left in the request bucket, send the message to the user
             else {
-                response.status(200).send("Deleted requested book from request bucket")
+                response.status(200).send({"message":"Deleted requested book from request bucket"})
                 return
             }
         }
 
         // If bookIndex == -1, book does not exist in the request bucket for the user
         else {
-            response.status(404).send("Book not found in request bucket")
+            response.status(404).send({"message":"Book not found in request bucket"})
         }
     }
     catch(error) {
         console.error(error)
-        response.status(500).send("DELETE operation failed to delete request for user")
+        response.status(500).send({"message":"DELETE operation failed to delete request for user"})
     }
 })
 
@@ -180,15 +184,15 @@ requestRouter.delete('/requests/deleterequests/:user_id', async(request, respons
                 await bookModel.updateOne({id : book_id}, {$inc : {count : +1}})
             }
             await requestModel.deleteOne({user_id : user_id})
-            response.status(200).send("Request bucket deleted for user: "+userDetail.name)
+            response.status(200).send({"message":`Request bucket deleted for user: ${userDetail.name}`})
         }
         // If the request bucket does not exist for the user
         else {
-            response.status(404).send("Request Bucket does not exist for the user:"+userDetail.name)
+            response.status(404).send({"message":`Request Bucket does not exist for the user:${userDetail.name}`})
         }
     }
     catch(error) {
-        response.status(500).send("DELETE operation failed to delete the entire request bucket for the user.")
+        response.status(500).send({"message":"DELETE operation failed to delete the entire request bucket for the user."})
     }
 })
 
