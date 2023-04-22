@@ -5,7 +5,7 @@ const userActivitiesModel = require('../models/UserActivities')
 const userModel = require('../models/users')
 const bookModel = require("../models/books")
 const jwt = require('jsonwebtoken')
-const User = require('../models/user')
+// const User = require('../models/user')
 
 // GET Operator - Get all past and current activities of a user
 UserActivitiesRouter.get('/checkout/:user_id', async(request, response) => {

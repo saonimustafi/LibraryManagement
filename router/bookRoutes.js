@@ -38,43 +38,52 @@ bookRouter.get('/books/:id', async(request, response) => {
     }
     catch(error) {
         console.error(error)
-        response.send(500).status("GET operation failed while fetching book: "+book_id)
+        response.status(500).send("GET operation failed while fetching book: "+book_id)
     }
 })
 
 // POST Operator
 bookRouter.post('/books/newbook', async (request, response) => {
     try {
-        const newBook = new bookModel(request.body)
+        // const newBook = new bookModel(request.body)
+        const newBook = {
+            id: Math.floor(Math.random() * 1000000),
+            image: request.body.image,
+            title: request.body.title,
+            author: request.body.author,
+            category: request.body.category,
+            count: request.body.count
+        }
+
         const book = await bookModel.findOne({title : newBook.title})
         if(!book) {
             const book = await bookModel.create(newBook)
-            response.status(201).send(book)
+            return response.status(201).send(book)
         }
         else {
-            response.status(400).send("Book already exists, please increase the count")
+            return response.status(200).send({"message":"Book already exists, please increase the count"})
         }
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('POST operation failed while creating new book')
+        response.status(500).send({"message":"POST operation failed while creating new book"})
     }
 })
 
 //PUT Operator
-bookRouter.put('/books/updatecount/:id/:count', async (request, response) => {
-    const book_id = request.params.id
-    const count = request.params.count
+bookRouter.put('/books/updatecount/:name', async (request, response) => {
+    const book_name = request.params.name
+    const count = request.body.count
     try {
         console.log('Updating Book...')
-        const book = await bookModel.findOne({id: book_id})
+        const book = await bookModel.findOne({title: name})
 
         if(!book) {
             response.status(404).send("Book not found, please add the book first")
             return
         }
 
-        const updateBook = await bookModel.updateOne({id: book_id},{$set : {count : count}})
+        const updateBook = await bookModel.updateOne({title: book_name},{$set : {count : count}})
         response.status(200).send(updateBook) 
     }
     catch(error) {
@@ -84,10 +93,25 @@ bookRouter.put('/books/updatecount/:id/:count', async (request, response) => {
 })
 
 // DELETE Operator
-bookRouter.delete('/books/deletebook/:id', async (request, response, next) => {
+bookRouter.delete('/books/deletebookid/:id', async (request, response, next) => {
     try {
         const deleteBook = await bookModel.findOneAndDelete({id: request.params.id})
         response.status(204).send(deleteBook)
+    }
+    catch(error) {
+        console.error(error)
+        response.status(500).send('DELETE operation failed while deleting book')
+    }
+})
+
+bookRouter.delete('/books/deletebookname/:name', async (request, response, next) => {
+    try {
+        const deleteBook = await bookModel.findOneAndDelete({title: request.params.name})
+        if(!deleteBook) {
+            response.status(404).send({"message":"Book Not Found"})
+            return
+        }
+        response.status(200).send(deleteBook)
     }
     catch(error) {
         console.error(error)
