@@ -71,19 +71,19 @@ bookRouter.post('/books/newbook', async (request, response) => {
 })
 
 //PUT Operator
-bookRouter.put('/books/updatecount/:name/:count', async (request, response) => {
-    const book_id = request.params.id
-    const count = request.params.count
+bookRouter.put('/books/updatecount/:name', async (request, response) => {
+    const book_name = request.params.name
+    const count = request.body.count
     try {
         console.log('Updating Book...')
-        const book = await bookModel.findOne({id: book_id})
+        const book = await bookModel.findOne({title: name})
 
         if(!book) {
             response.status(404).send("Book not found, please add the book first")
             return
         }
 
-        const updateBook = await bookModel.updateOne({id: book_id},{$set : {count : count}})
+        const updateBook = await bookModel.updateOne({title: book_name},{$set : {count : count}})
         response.status(200).send(updateBook) 
     }
     catch(error) {
