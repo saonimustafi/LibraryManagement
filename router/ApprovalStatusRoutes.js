@@ -412,7 +412,7 @@ approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(
         }
         else if (booksCheckedOut < maxBooks && approvedBooks < maxBooks && booksCheckedOut + approvedBooks + 1 <= maxBooks) {
             const approvalDate = new Date(Date.now())
-            await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
+            const updatedBookRequest = await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
                 {$set:
                         {"books.$.approvalStatus": 'Approved',
                             "books.$.approvedOrRejectedDate": approvalDate,
@@ -420,6 +420,13 @@ approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(
                         }
                 }
             )
+            const notification = new Notification({
+                message: 'Book request status updated',
+                userId: user_id,
+                bookId: book_id,
+                read: false
+              });
+              await notification.save();
             response.status(200).send({"approvalDate":approvalDate, "approvalStatus": "Approved"})
             return
         }

@@ -14,6 +14,7 @@ const returnBooksRouter = require('./router/returnBooksRoutes')
 const renewBookRouter = require('./router/renewBookRoutes')
 const SearchRouter = require('./router/SearchRoutes')
 const FineRouter = require('./router/FineRouter')
+const NotificationRouter = require('./router/NotificationRoutes')
 
 
 const app = express()
@@ -45,6 +46,7 @@ app.use('/', renewBookRouter)
 app.use('/', UserAuthRouter)
 app.use('/', UserActivitiesRouter)
 app.use('/', FineRouter)
+app.use('/', NotificationRouter)
 
 
 // Start server on port
