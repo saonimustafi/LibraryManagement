@@ -171,8 +171,8 @@ requestRouter.delete('/requests/deleterequests/:user_id', async(request, respons
     const user_id = request.params.user_id
 
     try {
-        const userDetail = await userModel.findOne({id : user_id})
-        let requestBucket = await requestModel.findOne({user_id : user_id})
+        const userDetail = await userModel.findOne({id : Number(user_id)})
+        let requestBucket = await requestModel.findOne({user_id : Number(user_id)})
 
         // If the books exist in the request bucket for the user, delete the books and increment the book count in the inventory
         if(requestBucket && requestBucket.books.length > 0) {
@@ -181,10 +181,10 @@ requestRouter.delete('/requests/deleterequests/:user_id', async(request, respons
             for(let bookIndex = 0; bookIndex < bookList.length; bookIndex++) {
                 let book_id = bookList[bookIndex].book_id
 
-                requestBucket = await requestModel.updateOne({user_id : user_id}, {$pull : {books : {book_id : book_id}}})
-                await bookModel.updateOne({id : book_id}, {$inc : {count : +1}})
+                requestBucket = await requestModel.updateOne({user_id : Number(user_id)}, {$pull : {books : {book_id : Number(book_id)}}})
+                await bookModel.updateOne({id : Number(book_id)}, {$inc : {count : +1}})
             }
-            await requestModel.deleteOne({user_id : user_id})
+            await requestModel.deleteOne({user_id : Number(user_id)})
             response.status(200).send({"message":`Request bucket deleted for user: ${userDetail.name}`})
         }
         // If the request bucket does not exist for the user
