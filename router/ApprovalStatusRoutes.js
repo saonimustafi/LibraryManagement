@@ -252,122 +252,6 @@ approveRouter.put("/bulkapproverequests/:user_id", async(request, response) => {
     }
 })
 
-
-
-// PUT Operator - Approve/Decline by Book ID
-// approveRouter.put("/approverequests/:user_id/:book_id", async(request, response) => {
-//     const user_id = request.params.user_id
-//     const book_id = request.params.book_id
-//
-//     try {
-//         const userDetail = await userModel.findOne({id: user_id})
-//
-//         const pendingRequestsForUser = await requestModel.aggregate([
-//             {$match: {"user_id": Number(user_id)}},
-//             {$unwind: "$books"},
-//             {$match: {"books.approvalStatus": "Pending"}},
-//             {$group: {_id: "$_id", books: {$push: "$books"}}},
-//             {$project: {_id: 0,books: 1}}
-//         ])
-//
-//         const approvedRequestsForUser = await requestModel.aggregate([{$match: { "user_id": Number(user_id) }},{$project:
-//                 {books: {$filter: {input: "$books", as: "book",
-//                             cond: {$and: [{$eq: ["$$book.approvalStatus", "Approved"]},{$eq: ["$$book.checkOutDate", null]}]}}
-//                         }
-//                 }
-//         }])
-//
-//
-//         const userActivities = await userActivitiesModel.aggregate([{$match: {"user_id": Number(user_id)}},{$project:
-//                 {booksBorrowed: { $filter: {input: "$booksBorrowed",as: "borrowed",
-//                             cond: {$gt: ["$$borrowed.returnDate", Date.now()]}}
-//                             }
-//                 }
-//         }])
-//
-//
-//         const book = await bookModel.findOne({id: book_id})
-//
-//         const userBooksRequests = pendingRequestsForUser[0].books.length
-//
-//         // If there are no pending requests for a user
-//         if(!pendingRequestsForUser || userBooksRequests == 0) {
-//             response.status(404).send("Requests don't exist for the user:"+userDetail.name)
-//             return
-//         }
-//
-//         // If the book is not present in the requests raised by the user
-//         const bookRequest = await requestModel.find({user_id: user_id, "books.book_id": Number(book_id)})
-//         if(!bookRequest) {
-//             response.status(404).send("Book request for book: "+ book.title +" does not exist for user: "+userDetail.name)
-//             return
-//         }
-//
-//         const booksCheckedOut = (userActivities.length == 0)? 0 : userActivities[0].booksBorrowed.length //numberOfBooksBorrowed
-//         const approvedBooks = approvedRequestsForUser[0].books.length
-//
-//         // If the user has already borrowed maximum books, decline the request and add the book to the inventory
-//         if(booksCheckedOut == maxBooks || approvedBooks == maxBooks || booksCheckedOut + approvedBooks == maxBooks) {
-//             if(pendingRequestsForUser[0].books[0].approvalStatus == "Pending") {
-//
-//                 // { user_id: 1, books: { $elemMatch: { book_id: 3 } } },
-//                 // { "books.$": 1 }
-//
-//
-//                 // await requestModel.updateOne({user_id: Number(user_id), "books.book_id": pendingRequestsForUser[0].books[0].book_id},
-//                 //     {
-//                 //         $set: {
-//                 //                 "books.$.approvalStatus": "Declined",
-//                 //                 "books.$.approvedOrRejectedDate": Date.now(),
-//                 //                 "books.$.comments": "You have already borrowed maximum books. Request declined"
-//                 //             }
-//                 //     }
-//                 // )
-//
-//                 // await requestModel.updateOne({user_id: Number(user_id), "books": { $elemMatch: {"book_id": pendingRequestsForUser[0].books[0].book_id}}}, {"books.$":1},
-//                 //     {
-//                 //         $set: {
-//                 //             "books.$.approvalStatus": "Declined",
-//                 //             "books.$.approvedOrRejectedDate": Date.now(),
-//                 //             "books.$.comments": "You have already borrowed maximum books. Request declined"
-//                 //         }
-//                 //     }
-//                 // )
-//
-//                 await requestModel.updateOne({user_id: user_id, "books.book_id": pendingRequestsForUser[0].books[0].book_id},{ $set: {
-//                             "books.$.approvalStatus" : "Declined",
-//                             "books.$.approvedOrRejectedDate" : Date.now(),
-//                             "books.$.comments" : "Request declined as you have reached the limit"
-//                         }
-//                     }
-//                 )
-//
-//                 await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
-//                 response.status(200).send("Request declined for user: " + userDetail.name + " as maximum books have been borrowed.")
-//                 return
-//             }
-//         }
-//
-//         // If the user has not yet reached the maximum number, approve the request
-//         else if (booksCheckedOut < maxBooks && approvedBooks < maxBooks - booksCheckedOut && approvedBooks + booksCheckedOut < maxBooks) {
-//             await requestModel.updateOne({user_id: Number(user_id), "books.book_id": Number(book_id)},
-//                 {$set:
-//                         {"books.$.approvalStatus": 'Approved',
-//                          "books.$.approvedOrRejectedDate": Date.now(),
-//                          "books.$.comments": "Request approved. Ready for checkout"
-//                         }
-//                 }
-//             )
-//             response.status(200).send("Request has been approved for book: " + book.title + " user: "+ userDetail.name)
-//             return
-//         }
-//     }
-//     catch(error) {
-//         console.error(error)
-//         response.status(500).send("PUT operation failed while approving/declining user request for the book")
-//     }
-// })
-
 // PUT Operator - To approve individual request
 approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(request, response) => {
 
@@ -406,8 +290,8 @@ approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(
         const booksCheckedOut = (userActivities.length == 0)? 0 : userActivities[0].booksBorrowed.length //numberOfBooksBorrowed
         const approvedBooks = (approvedRequestsForUser.length == 0)? 0 : approvedRequestsForUser[0].books.length
 
-        if(userActivities !== null && booksCheckedOut + approvedBooks == maxBooks) {
-            response.status(200).send({"message":"Please decline the request as the user has already borrowed maximum books"})
+        if(userActivities !== null && booksCheckedOut + approvedBooks >= maxBooks) {
+            response.status(400).send({"message":"Please decline the request as the user has already borrowed maximum books"})
             return
         }
         else if (booksCheckedOut < maxBooks && approvedBooks < maxBooks && booksCheckedOut + approvedBooks + 1 <= maxBooks) {
@@ -420,15 +304,27 @@ approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(
                         }
                 }
             )
-            const notification = new Notification({
-                message: 'Book request status updated',
-                userId: user_id,
-                bookId: book_id,
-                read: false
-              });
-              await notification.save();
-            response.status(200).send({"approvalDate":approvalDate, "approvalStatus": "Approved"})
-            return
+            bookModel.findOne({id: Number(book_id)})
+                .then(book => {
+                    console.log(book.title); // logs the book's title
+                    const notificationMsg = "Your request for '" + book.title +  "' is approved."
+                    const notification = new Notification({
+                        id: Math.floor(Math.random() * 1000000),
+                        message: notificationMsg,
+                        userId: user_id,
+                        bookId: book_id,
+                        read: false
+                    });
+                    return notification.save(); // return the save operation Promise
+                })
+                .then(() => {
+                    response.status(200).send({"approvalDate": approvalDate, "approvalStatus": "Approved"})
+                })
+                .catch(err => {
+                    console.error(err); // handle any errors
+                    response.status(500).send({"message": "Some error occurred"})
+                });
+
         }
     }
     catch(error) {
@@ -510,74 +406,6 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
         console.error(error)
         response.status(500).send({"message":"PUT operation failed while approving user request for the book"})
     }
-})
-
-// PUT Operator - To approve individual request
-// approveRouter.put('/requests/approveindividualrequest/:user_id/:book_id', async(request, response) => {
-//     const user_id = request.params.user_id
-//     const book_id = request.params.book_id
-//
-//     try {
-//         const userDetail = await userModel.findOne({id: user_id})
-//         const approvalRequestsForUser = await requestModel.findOne({user_id: user_id, "books.book_id": book_id, "books.approvalStatus": "Pending"})
-//         const userActivities = await userActivitiesModel.findOne({user_id: user_id, "booksBorrowed.$.returnDate": {$gt: Date.now()} })
-//
-//         if(!approvalRequestsForUser || approvalRequestsForUser.books.length == 0) {
-//             response.status(404).send("Requests don't exist for the user:"+userDetail.name)
-//             return
-//         }
-//
-//         const userBooksRequests = approvalRequestsForUser.books
-//
-//         if(userActivities !== null && userActivities.booksBorrowed.length == maxBooks) {
-//             response.status(200).send("Please decline the request as the user has already borrowed maximum books")
-//             return
-//         }
-//         else if (userActivities.booksBorrowed.length < maxBooks && userActivities.booksBorrowed.length + 1 <= maxBooks) {
-//             await requestModel.updateOne({user_id: user_id, "books.book_id": book_id},
-//                 {$set:
-//                         {"books.$.approvalStatus": 'Approved',
-//                             "books.$.approvedOrRejectedDate": Date.now(),
-//                             "books.$.comments": "Request approved. Ready for checkout"
-//                         }
-//                 }
-//             )
-//             response.status(200).send("Request has been approved for book: " + book.name + " user: "+ userDetail.name)
-//             return
-//         }
-//     }
-//     catch(error) {
-//         console.error(error)
-//         response.status(500).send("PUT operation failed while approving user request for the book")
-//     }
-// })
-
-// Dummy approve route for checking notifications
-approveRouter.post('/requests/aveekapprove/:user_id/:book_id', async(request, response) => {
-    const user_id = request.params.user_id
-    const book_id = request.params.book_id
-    const io = socketIO.getIO();
-    const Notification = require('../models/Notification');
-
-    
-
-    // create a new notification
-    const notification = new Notification({
-        message: 'New book approved',
-        userId: 'userId123',
-        bookId: 1,
-        read: false
-    });
-
-    // save the notification to the database
-    await notification.save()
-    .then(() => {
-        console.log('Notification saved');
-    })
-    .catch((err) => {
-        console.log('Error saving notification: ', err);
-    });
-    response.status(200).send("Request has been approved for book: " + book_id + " user: "+ user_id)
 })
 
 module.exports = approveRouter
