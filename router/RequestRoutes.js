@@ -77,6 +77,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
                 await bookModel.updateOne({id : Number(book_id)}, {$inc : {count : -1}})
 
                 response.status(201).send({"message":`Book added to Request Bucket for user: ${userDetail.name}`})
+                return
             }
             // If the count of book == 0
             else {
@@ -121,8 +122,8 @@ requestRouter.delete('/requests/deleterequests/:user_id/:book_id',async(request,
     const book_id = request.params.book_id
     
     try {
-        let requestBucket = await requestModel.findOne({user_id: user_id})
-        const userDetail = await userModel.findOne({id: user_id})
+        let requestBucket = await requestModel.findOne({user_id: Number(user_id)})
+        const userDetail = await userModel.findOne({id: Number(user_id)})
 
         // If request bucket for user is not found
         if(!requestBucket) {
@@ -135,14 +136,14 @@ requestRouter.delete('/requests/deleterequests/:user_id/:book_id',async(request,
 
         // If the book to be deleted exists, delete the book and increase the count of the book in inventory
         if(bookIndex> -1) {
-            await requestModel.updateOne({user_id : user_id}, {$pull : {books : {book_id : book_id}}})
-            await bookModel.updateOne({id: book_id},{$inc : {count : +1}})
+            await requestModel.updateOne({user_id : Number(user_id)}, {$pull : {books : {book_id : Number(book_id)}}})
+            await bookModel.updateOne({id: Number(book_id)},{$inc : {count : +1}})
 
-            const requestBucketAfterDeletion = await requestModel.findOne({user_id : user_id})
+            const requestBucketAfterDeletion = await requestModel.findOne({user_id : Number(user_id)})
 
             // If after book deletion from request bucket, there are no more books, delete the request bucket for the user entirely
             if(requestBucketAfterDeletion.books.length === 0) {
-                await requestModel.deleteOne({user_id : user_id})
+                await requestModel.deleteOne({user_id : Number(user_id)})
                 response.status(200).send({"message":"Book deleted from request & request bucket for the user has been removed"})
                 return
             }
