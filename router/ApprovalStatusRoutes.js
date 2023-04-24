@@ -17,34 +17,6 @@ approveRouter.get("/allpendingrequests", async(request, response) => {
             request.books.some(book => book.approvalStatus === "Pending")
         )
 
-        // const allRequests = await requestModel.find({});
-        // console.log("allRequests=" + JSON.stringify(allRequests))
-        // const filteredRequests = allRequests.filter(request => {
-        //     console.log("request.books = " + request.books);
-        //     return request.books.some(book => {
-        //         console.log("      book.approvalStatus = " + book.approvalStatus);
-        //         return book.approvalStatus === "Pending";
-        //     });
-        // });
-
-        // const allRequests = await requestModel.find({});
-        // const pendingRequests = allRequests
-        //     .map(item => {
-        //         return {
-        //             ...item,
-        //             books: item.books.filter(book => book.approvalStatus === "Pending")
-        //         }
-        //     });
-
-        // const filteredRequests = await requestModel.find({
-        //     books: {
-        //         $elemMatch: {
-        //             approvalStatus: "Pending"
-        //         }
-        //     }
-        // });
-
-
         if(!pendingRequests) {
             response.status(404).send("No requests pending to approve")
             return

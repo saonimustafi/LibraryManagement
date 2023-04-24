@@ -71,24 +71,24 @@ bookRouter.post('/books/newbook', async (request, response) => {
 })
 
 //PUT Operator
-bookRouter.put('/books/updatecount/:name', async (request, response) => {
-    const book_name = request.params.name
+bookRouter.put('/books/updatecount', async (request, response) => {
+    const book_name = request.body.name
     const count = request.body.count
     try {
         console.log('Updating Book...')
-        const book = await bookModel.findOne({title: name})
+        const book = await bookModel.findOne({title: book_name})
 
         if(!book) {
             response.status(404).send("Book not found, please add the book first")
             return
         }
 
-        const updateBook = await bookModel.updateOne({title: book_name},{$set : {count : count}})
+        const updateBook = await bookModel.updateOne({title: book_name},{$set : {count : Number(count)}})
         response.status(200).send(updateBook) 
     }
     catch(error) {
         console.error(error)
-        response.status(500).send('PUT operation failed while updating book')
+        response.status(500).send({"message":'PUT operation failed while updating book'})
     }
 })
 
