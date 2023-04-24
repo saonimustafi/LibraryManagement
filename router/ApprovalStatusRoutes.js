@@ -12,13 +12,44 @@ const Notification = require('../models/Notification');
 // GET Operator - Get all the pending requests
 approveRouter.get("/allpendingrequests", async(request, response) => {
     try {
-        const approvalRequests = await requestModel.find({"books.approvalStatus": "Pending"})
+        const approvalRequests = await requestModel.find({})
+        const pendingRequests = approvalRequests.filter(request =>
+            request.books.some(book => book.approvalStatus === "Pending")
+        )
 
-        if(!approvalRequests) {
+        // const allRequests = await requestModel.find({});
+        // console.log("allRequests=" + JSON.stringify(allRequests))
+        // const filteredRequests = allRequests.filter(request => {
+        //     console.log("request.books = " + request.books);
+        //     return request.books.some(book => {
+        //         console.log("      book.approvalStatus = " + book.approvalStatus);
+        //         return book.approvalStatus === "Pending";
+        //     });
+        // });
+
+        // const allRequests = await requestModel.find({});
+        // const pendingRequests = allRequests
+        //     .map(item => {
+        //         return {
+        //             ...item,
+        //             books: item.books.filter(book => book.approvalStatus === "Pending")
+        //         }
+        //     });
+
+        // const filteredRequests = await requestModel.find({
+        //     books: {
+        //         $elemMatch: {
+        //             approvalStatus: "Pending"
+        //         }
+        //     }
+        // });
+
+
+        if(!pendingRequests) {
             response.status(404).send("No requests pending to approve")
             return
         }
-        response.status(200).send(approvalRequests)
+        response.status(200).send(pendingRequests)
     }
     catch(error) {
         console.error(error)
