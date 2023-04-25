@@ -49,7 +49,7 @@ returnBooksRouter.put('/return/:user_id/:book_id', async(request, response) => {
         if(actualReturnDate > returnDate) {
             // Update the actualReturnDate and fineToPay in the userActivity model
 
-            const DiffInMS = actualReturnDate.getTime() - returnDate.getTime()
+            const DiffInMS = actualReturnDate - returnDate
             const DiffInDays = Math.floor(DiffInMS/(1000 * 60 * 60 * 24))
 
             const fineForBook = DiffInDays * finePerDay
@@ -87,6 +87,7 @@ returnBooksRouter.put('/return/:user_id/:book_id', async(request, response) => {
         await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
 
         response.status(200).send({"actualReturnDate":actualReturnDate})
+        return
     }
     catch(error) {
         console.error(error)

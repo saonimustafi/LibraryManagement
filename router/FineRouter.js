@@ -24,9 +24,9 @@ FineRouter.get('/getfinedetails/:user_id', async(request, response) => {
             var book_id = booksBorrowedDetail[bookIndex].book_id
 
             if(booksBorrowedDetail[bookIndex].finePaid === false && booksBorrowedDetail[bookIndex].actualReturnDate === null && currentDate > booksBorrowedDetail[bookIndex].returnDate) {
-                var returnDate = userActivityDetail[0].books[bookIndex].returnDate
+                var returnDate = userActivityDetail[0].booksBorrowed[bookIndex].returnDate
 
-                var DiffInMS = currentDate.getTime() - returnDate.getTime()
+                var DiffInMS = currentDate - returnDate
                 var DiffInDays = Math.floor(DiffInMS/(1000 * 60 * 60 * 24))
 
                 const currentFine = DiffInDays * finePerDay

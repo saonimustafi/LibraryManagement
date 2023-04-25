@@ -388,7 +388,29 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
             )
 
             await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
-            response.status(200).send({"rejectDate":rejectDate})
+
+            bookModel.findOne({id: Number(book_id)})
+                .then(book => {
+                    console.log(book.title); // logs the book's title
+                    const notificationMsg = "Your request for '" + book.title +  "has been declined."
+                    const notification = new Notification({
+                        id: Math.floor(Math.random() * 1000000),
+                        message: notificationMsg,
+                        userId: user_id,
+                        bookId: book_id,
+                        read: false
+                    });
+                    return notification.save(); // return the save operation Promise
+                })
+                .then(() => {
+                    response.status(200).send({"rejectDate":rejectDate, "approvalStatus":"Declined"})
+                })
+                .catch(err => {
+                    console.error(err); // handle any errors
+                    response.status(500).send({"message": "Some error occurred"})
+                });
+
+            // response.status(200).send({"rejectDate":rejectDate})
             return
         }
 
@@ -402,8 +424,30 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
         )
 
         await bookModel.updateOne({id: Number(book_id)}, {$inc: {count: +1}})
-        response.status(200).send({"rejectDate":rejectDate, "approvalStatus":"Declined"})
-        return
+
+        bookModel.findOne({id: Number(book_id)})
+            .then(book => {
+                console.log(book.title); // logs the book's title
+                const notificationMsg = "Your request for '" + book.title +  "has been declined."
+                const notification = new Notification({
+                    id: Math.floor(Math.random() * 1000000),
+                    message: notificationMsg,
+                    userId: user_id,
+                    bookId: book_id,
+                    read: false
+                });
+                return notification.save(); // return the save operation Promise
+            })
+            .then(() => {
+                response.status(200).send({"rejectDate":rejectDate, "approvalStatus":"Declined"})
+            })
+            .catch(err => {
+                console.error(err); // handle any errors
+                response.status(500).send({"message": "Some error occurred"})
+            });
+
+        // response.status(200).send({"rejectDate":rejectDate, "approvalStatus":"Declined"})
+        // return
     }
     catch(error) {
         console.error(error)
