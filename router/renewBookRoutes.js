@@ -36,8 +36,8 @@ renewBookRouter.put('/activities/renew/:user_id/:book_id', async(request, respon
             const newReturnDate = new Date(returnDate)
 
             const newReturnYear = newReturnDate.getFullYear()
-            const newReturnMonth = newReturnDate.getMonth() + 2
-            const newReturnDay = newReturnDate.getDate()
+            const newReturnMonth = newReturnDate.getMonth() + 1
+            const newReturnDay = newReturnDate.getDate() + 1
 
             const newReturnDateString = `${newReturnYear}-${newReturnMonth}-${newReturnDay}`
             const newReturnDateForUser = new Date(newReturnDateString)

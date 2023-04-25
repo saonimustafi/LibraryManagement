@@ -5,6 +5,7 @@ const userActivitiesModel = require('../models/UserActivities')
 const userModel = require('../models/users')
 const bookModel = require("../models/books")
 const jwt = require('jsonwebtoken')
+const Notification = require("../models/Notification");
 // const User = require('../models/user')
 
 // GET Operator - Get all past and current activities of a user
@@ -107,8 +108,8 @@ UserActivitiesRouter.put('/checkout/:user_id/:book_id', async(request, response)
         const currentDate = new Date(checkOutDateForUser)
 
         const returnYear = currentDate.getFullYear()
-        const returnMonth = currentDate.getMonth() + 2
-        const returnDay = currentDate.getDate()
+        const returnMonth = currentDate.getMonth() + 1
+        const returnDay = currentDate.getDate() + 1
 
         const returnDateString = `${returnYear}-${returnMonth}-${returnDay}`
         const returnDateForUser = new Date(returnDateString)
