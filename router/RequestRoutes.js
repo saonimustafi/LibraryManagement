@@ -3,6 +3,7 @@ const requestRouter = new express.Router()
 const requestModel = require('../models/request')
 const bookModel = require('../models/books')
 const userModel = require('../models/users')
+const userActivitiesModel = require('../models/UserActivities')
 
 // GET Operator
 requestRouter.get('/requests/:user_id', async (request, response) => {
@@ -36,6 +37,7 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
         const requestBucket = await requestModel.findOne({user_id: Number(user_id)})
         const book = await bookModel.findOne({id: Number(book_id)})
         const userDetail = await userModel.findOne({id: Number(user_id)})
+        const userActivity = await userActivitiesModel.findOne({user_id: Number(user_id)})
 
         if(!book) {
             response.status(404).send("Book not found")
@@ -47,9 +49,20 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
             const bookIndex = requestBucket.books.findIndex(book => book.book_id == Number(book_id))
 
             // If the book already exists in the request bucket - do not add it again
-            if(bookIndex > -1 && (requestBucket.books[bookIndex].book_id == Number(book_id) && (requestBucket.books[bookIndex].approvalStatus == "Pending" || requestBucket.books[bookIndex].approvalStatus == "Approved"))) {
-                response.status(200).send(`Cannot add the book "${book.title}" to the request bucket as it already exists for the user: ${userDetail.name}`)
+            if(bookIndex > -1 && (requestBucket.books[bookIndex].book_id == Number(book_id) && (requestBucket.books[bookIndex].approvalStatus == "Pending"
+                || (requestBucket.books[bookIndex].approvalStatus == "Approved" && requestBucket.books[bookIndex].checkOutDate === null)))) {
+                response.status(400).send({"message":`Cannot add the book to the request bucket as it already exists for the user`})
                 return
+            }
+
+            if(userActivity) {
+                const bookIndex = userActivity.booksBorrowed.findIndex(book => book.book_id == Number(book_id))
+
+                if(bookIndex > -1 && (userActivity.booksBorrowed[bookIndex].book_id == Number(book_id) &&
+                    (userActivity.booksBorrowed[bookIndex].actualReturnDate == null))) {
+                    response.status(400).send({"message":"Cannot add book. Book already borrowed"})
+                    return
+                }
             }
 
             const book_count = book.count
@@ -88,6 +101,16 @@ requestRouter.post('/requests/newrequests/:user_id/:book_id', async (request, re
 
         // If the request bucket for the user does not exist
         else {
+
+            if(userActivity) {
+                const bookIndex = userActivity.booksBorrowed.findIndex(book => book.book_id == Number(book_id))
+
+                if(bookIndex > -1 && (userActivity.booksBorrowed[bookIndex].book_id == Number(book_id) &&
+                    (userActivity.booksBorrowed[bookIndex].actualReturnDate == null))) {
+                    response.status(400).send({"message":"Cannot add book. Book already borrowed"})
+                    return
+                }
+            }
             // Create a new request bucket
             const newBookRequest =
                 {

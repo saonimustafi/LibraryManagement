@@ -367,7 +367,7 @@ approveRouter.put('/requests/declineindividualrequest/:user_id/:book_id', async(
         ])
 
         if(!pendingBookRequestForUser) {
-            response.status(404).send({"message":"Requests don't exist for the user:"+userDetail.name})
+            response.status(404).send({"message":"Requests don't exist for the user"})
             return
         }
 
